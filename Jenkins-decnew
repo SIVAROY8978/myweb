@@ -1,42 +1,35 @@
-pipeline {
+pipeline{
     agent any
-
-    environment {
+    
+    environment{
         PATH = "/opt/maven3/bin:$PATH"
     }
-
-    stages {
-
-        stage("Git Checkout") {
-            steps {
-                git credentialsId: 'siva1',
-                    url: 'https://github.com/SIVAROY8978/myweb.git'
+    stages{
+        stage("checkgit"){
+            steps{
+                git credentialsId: 'siva1', url: 'https://github.com/SIVAROY8978/myweb.git'
             }
         }
-
-        stage("Maven Build") {
-            steps {
+        stage("create war file"){
+            steps{
                 sh "mvn clean package"
                 sh "mv target/*.war target/myweb.war"
             }
         }
-
-        stage("Deploy-Dev") {
-            steps {
+        stage("copy to tomcat"){
+            steps{
                 sshagent(['siva2']) {
-                    sh """
-                        scp -o StrictHostKeyChecking=no target/myweb.war \
-                        ec2-user@172.31.42.130:/home/ec2-user/apache-tomcat-9.0.113/webapps/
-
-                        ssh ec2-user@172.31.42.130 \
-                        /home/ec2-user/apache-tomcat-9.0.113/bin/shutdown.sh
-
-                        ssh ec2-user@172.31.42.130 \
-                        /home/ec2-user/apache-tomcat-9.0.113/bin/startup.sh
-                    """
-                }
+                sh """
+                    scp -o StrictHostKeyChecking=no target/myweb.war  ec2-user@172.31.42.130:/home/ec2-user/apache-tomcat-9.0.113/webapps/
+                    
+                    ssh ec2-user@172.31.42.130 /home/ec2-user/apache-tomcat-9.0.113/bin/shutdown.sh
+                    
+                    ssh ec2-user@172.31.42.130 /home/ec2-user/apache-tomcat-9.0.113/bin/startup.sh
+                
+                """
+            }
+            
             }
         }
-
     }
 }
