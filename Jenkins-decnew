@@ -9,6 +9,7 @@ pipeline{
             steps{
             git credentialsId: 'siva1', url: 'https://github.com/SIVAROY8978/myweb.git'
         }
+}
         stage("Maven Build"){
             steps{
                 sh "mvn clean package"
