@@ -1,4 +1,4 @@
-pipeline{
+pipeline {
     agent any
 
     environment {
@@ -6,6 +6,7 @@ pipeline{
     }
 
     stages {
+
         stage("checkgit") {
             steps {
                 git credentialsId: 'siva', url: 'https://github.com/SIVAROY8978/myweb.git'
@@ -18,15 +19,22 @@ pipeline{
                 sh "mv target/*.war target/myweb.war"
             }
         }
+
         stage("copy to tomcat") {
             steps {
                 sshagent(['prasad']) {
                     sh """
-                        scp -o StrictHostKeyChecking=no target/myweb.war ec2-user@172.31.44.174:/home/ec2-user/apache-tomcat-9.0.113/webapps/
+                        # Copy WAR to ec2-user home directory
+                        scp -o StrictHostKeyChecking=no target/myweb.war ec2-user@172.31.44.174:/home/ec2-user/
 
-                        ssh ec2-user@172.31.44.174 "/home/ec2-user/apache-tomcat-9.0.113/bin/shutdown.sh || true"
+                        # Stop Tomcat (ignore error if already stopped)
+                        ssh ec2-user@172.31.44.174 "sudo /home/ec2-user/apache-tomcat-9.0.113/bin/shutdown.sh || true"
 
-                        ssh ec2-user@172.31.44.174 "/home/ec2-user/apache-tomcat-9.0.113/bin/startup.sh"
+                        # Move WAR to webapps using sudo
+                        ssh ec2-user@172.31.44.174 "sudo mv /home/ec2-user/myweb.war /home/ec2-user/apache-tomcat-9.0.113/webapps/"
+
+                        # Start Tomcat
+                        ssh ec2-user@172.31.44.174 "sudo /home/ec2-user/apache-tomcat-9.0.113/bin/startup.sh"
                     """
                 }
             }
